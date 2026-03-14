@@ -1,6 +1,9 @@
-const { getSupabase } = require('./_helpers');
+const { getSupabase, requireAuth } = require('./_helpers');
 
 module.exports = async (req, res) => {
+  const user = requireAuth(req, res);
+  if (!user) return;
+
   try {
     const supabase = getSupabase();
 

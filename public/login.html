@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인 — 콘텐츠 DB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:         oklch(0.975 0.008 65);
+  --bg-card:    oklch(0.985 0.006 70);
+  --border:     oklch(0.91 0.012 60);
+  --border-lt:  oklch(0.935 0.008 65);
+  --text:       oklch(0.25 0.015 50);
+  --text-2:     oklch(0.42 0.015 55);
+  --text-3:     oklch(0.58 0.012 55);
+  --text-4:     oklch(0.70 0.010 55);
+  --accent:     oklch(0.58 0.14 35);
+  --accent-hover:oklch(0.52 0.15 33);
+  --accent-soft:oklch(0.58 0.14 35 / 0.10);
+  --red:        oklch(0.58 0.18 25);
+  --red-soft:   oklch(0.58 0.18 25 / 0.08);
+  --radius-m:   10px;
+  --radius-l:   14px;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+html{background:var(--bg)}
+body{
+  font-family:'Nanum Gothic','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+
+.login-wrapper{
+  width:100%;
+  max-width:400px;
+  padding:20px;
+}
+
+.login-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-l);
+  padding:48px 40px 40px;
+  box-shadow:0 4px 24px oklch(0.25 0.015 50 / 0.06);
+  animation:fadeUp 0.5s var(--ease-out-quart) both;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.login-logo{
+  text-align:center;
+  margin-bottom:32px;
+}
+.login-logo .icon{
+  font-size:48px;
+  display:block;
+  margin-bottom:12px;
+}
+.login-logo h1{
+  font-size:20px;
+  font-weight:800;
+  color:var(--text);
+  letter-spacing:-0.02em;
+}
+.login-logo p{
+  font-size:13px;
+  color:var(--text-3);
+  margin-top:6px;
+}
+
+.form-group{
+  margin-bottom:18px;
+}
+.form-group label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-2);
+  margin-bottom:6px;
+  letter-spacing:0.02em;
+}
+.form-group input{
+  width:100%;
+  padding:12px 14px;
+  font-size:14px;
+  font-family:inherit;
+  color:var(--text);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-m);
+  outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input::placeholder{
+  color:var(--text-4);
+}
+.form-group input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+
+.login-btn{
+  width:100%;
+  padding:13px;
+  font-size:15px;
+  font-weight:800;
+  font-family:inherit;
+  color:white;
+  background:var(--accent);
+  border:none;
+  border-radius:var(--radius-m);
+  cursor:pointer;
+  margin-top:8px;
+  transition:background 0.2s, transform 0.1s;
+}
+.login-btn:hover{
+  background:var(--accent-hover);
+}
+.login-btn:active{
+  transform:scale(0.98);
+}
+.login-btn:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
+.error-msg{
+  display:none;
+  margin-top:16px;
+  padding:10px 14px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--red);
+  background:var(--red-soft);
+  border:1px solid oklch(0.58 0.18 25 / 0.15);
+  border-radius:var(--radius-m);
+  text-align:center;
+  animation:shake 0.4s var(--ease-out-quart);
+}
+.error-msg.show{display:block}
+
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+
+.footer{
+  text-align:center;
+  margin-top:24px;
+  font-size:11px;
+  color:var(--text-4);
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="icon">🐾</span>
+      <h1>콘텐츠 DB</h1>
+      <p>반려동물 콘텐츠 라이브러리</p>
+    </div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="loginId">아이디</label>
+        <input type="text" id="loginId" name="username" placeholder="아이디를 입력하세요" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPw">비밀번호</label>
+        <input type="password" id="loginPw" name="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">로그인</button>
+    </form>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+  <div class="footer">© 2026 콘텐츠 DB</div>
+</div>
+
+<script>
+(function() {
+  // If already authenticated, redirect to dashboard
+  fetch('/api/auth', { credentials: 'include' })
+    .then(r => { if (r.ok) window.location.href = '/'; })
+    .catch(() => {});
+
+  const form = document.getElementById('loginForm');
+  const btn = document.getElementById('loginBtn');
+  const errorEl = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = '로그인 중...';
+
+    const id = document.getElementById('loginId').value.trim();
+    const password = document.getElementById('loginPw').value;
+
+    if (!id || !password) {
+      showError('아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        window.location.href = '/';
+      } else {
+        showError(data.error || '로그인에 실패했습니다.');
+      }
+    } catch {
+      showError('서버에 연결할 수 없습니다.');
+    }
+  });
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove('show');
+    // Force reflow for animation restart
+    void errorEl.offsetWidth;
+    errorEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '로그인';
+  }
+})();
+</script>
+</body>
+</html>

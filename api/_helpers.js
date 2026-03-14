@@ -1,6 +1,37 @@
 const { createClient } = require('@supabase/supabase-js');
+const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'pet-content-dashboard-fallback-secret-2026';
+
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  (cookieHeader || '').split(';').forEach(pair => {
+    const [key, ...vals] = pair.trim().split('=');
+    if (key) cookies[key.trim()] = vals.join('=').trim();
+  });
+  return cookies;
+}
+
+/**
+ * Auth middleware — verifies JWT from httpOnly cookie.
+ * Returns the user payload if valid, or sends 401 and returns null.
+ */
+function requireAuth(req, res) {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies.auth_token;
+  if (!token) {
+    res.status(401).json({ error: '인증이 필요합니다.' });
+    return null;
+  }
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    res.status(401).json({ error: '토큰이 만료되었거나 유효하지 않습니다.' });
+    return null;
+  }
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gznarqkmuafkxotljfzu.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
@@ -62,4 +93,4 @@ function getAllTopics() {
   return topics;
 }
 
-module.exports = { getSupabase, loadData, loadAccounts, getAllTopics, DATA_DIR };
+module.exports = { getSupabase, loadData, loadAccounts, getAllTopics, DATA_DIR, requireAuth };

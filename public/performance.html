@@ -56,6 +56,7 @@ body{
   padding:24px 0;
   position:fixed;top:0;left:0;bottom:0;
   overflow-y:auto;z-index:10;
+  display:flex;flex-direction:column;
 }
 .sidebar-header{padding:0 20px 20px;border-bottom:1px solid var(--border)}
 .sidebar-header h1{font-size:clamp(14px,1rem,16px);font-weight:800;display:flex;align-items:center;gap:8px;color:var(--text)}
@@ -277,6 +278,9 @@ body{
   <a class="nav-item active" href="/performance.html">📊 성과 대시보드</a>
   <div class="nav-divider"></div>
   <div id="accountNav"></div>
+  <div style="margin-top:auto;padding:14px 20px;border-top:1px solid var(--border);position:absolute;bottom:0;left:0;right:0;">
+    <button onclick="handleLogout()" style="width:100%;padding:9px 14px;font-size:13px;font-weight:700;font-family:inherit;color:var(--text-3);background:transparent;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='var(--border)'">🚪 로그아웃</button>
+  </div>
 </aside>
 
 <main class="main">
@@ -354,6 +358,18 @@ body{
 </div>
 
 <script>
+// === AUTH CHECK ===
+(function(){
+  fetch('/api/auth',{credentials:'include'})
+    .then(function(r){if(!r.ok)throw new Error();})
+    .catch(function(){window.location.href='/login.html';});
+})();
+
+async function handleLogout(){
+  try{await fetch('/api/auth',{method:'DELETE',credentials:'include'});}catch{}
+  window.location.href='/login.html';
+}
+
 // === 상태 ===
 let perfData = null;
 let accountsData = null;
