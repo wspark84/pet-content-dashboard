@@ -1,6 +1,23 @@
+const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gznarqkmuafkxotljfzu.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
+
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    if (!SUPABASE_ANON_KEY) {
+      throw new Error('SUPABASE_ANON_KEY 환경변수가 설정되지 않았습니다.');
+    }
+    _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return _supabase;
+}
+
+// Fallback: 파일 기반 데이터 (Supabase 연결 실패 시)
 const DATA_DIR = path.join(process.cwd(), 'data');
 
 let _cache = null;
@@ -45,4 +62,4 @@ function getAllTopics() {
   return topics;
 }
 
-module.exports = { loadData, loadAccounts, getAllTopics, DATA_DIR };
+module.exports = { getSupabase, loadData, loadAccounts, getAllTopics, DATA_DIR };

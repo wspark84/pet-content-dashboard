@@ -1,10 +1,57 @@
-const { loadData } = require('./_helpers');
+const { getSupabase } = require('./_helpers');
 
-module.exports = (req, res) => {
-  const data = loadData();
-  const cats = data.categories.map(c => ({
-    id: c.id, name: c.name, icon: c.icon,
-    subcategories: c.subcategories.map(s => ({ id: s.id, name: s.name, icon: s.icon, count: s.topics.length }))
-  }));
-  res.json(cats);
+module.exports = async (req, res) => {
+  try {
+    const supabase = getSupabase();
+
+    // Fetch categories
+    const { data: categories, error: catErr } = await supabase
+      .from('content_categories')
+      .select('*')
+      .order('name');
+
+    if (catErr) throw catErr;
+
+    // Fetch subcategories with topic counts
+    const { data: subcategories, error: subErr } = await supabase
+      .from('content_subcategories')
+      .select('*')
+      .order('name');
+
+    if (subErr) throw subErr;
+
+    // Fetch topic counts per subcategory
+    const { data: topicCounts, error: countErr } = await supabase
+      .from('content_topics')
+      .select('category_id, subcategory_id');
+
+    if (countErr) throw countErr;
+
+    // Count topics per subcategory
+    const countMap = {};
+    for (const t of topicCounts) {
+      const key = `${t.category_id}:${t.subcategory_id}`;
+      countMap[key] = (countMap[key] || 0) + 1;
+    }
+
+    // Build response
+    const result = categories.map(c => ({
+      id: c.id,
+      name: c.name,
+      icon: c.icon,
+      subcategories: subcategories
+        .filter(s => s.category_id === c.id)
+        .map(s => ({
+          id: s.id,
+          name: s.name,
+          icon: s.icon,
+          count: countMap[`${c.id}:${s.id}`] || 0
+        }))
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error('Categories API error:', err.message);
+    res.status(500).json({ error: '카테고리 조회 실패', detail: err.message });
+  }
 };
