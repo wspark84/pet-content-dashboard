@@ -1228,7 +1228,7 @@ function selectTrend(idx) {
   display.innerHTML = `
     <div class="trend-display-rank">#${idx+1}</div>
     <div class="trend-display-title">${t.title}</div>
-    <div class="trend-display-desc">${t.description || ''}</div>
+    <div class="trend-display-desc">${t.description || (t.date || t.views ? [t.date ? `📅 ${t.date}` : '', t.views ? `👁️ ${Number(t.views).toLocaleString()}회` : '', t.source ? `📌 ${t.source.split('(')[0].trim()}` : ''].filter(Boolean).join(' · ') : '')}</div>
     <div class="trend-display-meta">
       <span>${animalIcon[t.animal]} ${t.subcategoryName}</span>
       <span>난이도: ${diffLabel[t.difficulty]}</span>
@@ -1286,7 +1286,7 @@ async function loadTopics() {
         <div class="card-title">${t.title}</div>
         <div class="card-animal">${animalIcon[t.animal]}</div>
       </div>
-      <div class="card-desc">${t.description}</div>
+      <div class="card-desc">${t.description || (t.date || t.views || t.source ? [t.date ? `📅 ${t.date}` : '', t.views ? `👁️ ${Number(t.views).toLocaleString()}회` : '', t.source ? `📌 ${t.source.split('(')[0].trim()}` : ''].filter(Boolean).join(' · ') : '')}</div>
       <div class="card-tags">${t.tags.slice(0,4).map(tag => `<span class="tag">#${tag}</span>`).join('')}</div>
       <div class="card-footer">
         <span class="diff-badge diff-${t.difficulty}">${diffLabel[t.difficulty]}</span>
@@ -1312,7 +1312,7 @@ function switchTab(tab) {
 
 function renderSummary(t) {
   if (t.summary) return t.summary;
-  let html = `<h3>📌 개요</h3><p>${t.description}</p>`;
+  let html = `<h3>📌 개요</h3><p>${t.description || (t.date || t.views ? [t.date ? `📅 발행일: ${t.date}` : '', t.views ? `👁️ 조회수: ${Number(t.views).toLocaleString()}회` : '', t.source ? `📌 출처: ${t.source}` : ''].filter(Boolean).join('<br>') : '정보 없음')}</p>`;
   if (t.keyPoints && t.keyPoints.length > 0) {
     html += `<h3>💡 핵심 포인트</h3><ul>${t.keyPoints.map(p => `<li>${p}</li>`).join('')}</ul>`;
   }
