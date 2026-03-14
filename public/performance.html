@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 성과 대시보드 - 반려동물 콘텐츠</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--bg2:#1a1d27;--bg3:#242836;--bg4:#2d3244;
+  --text:#e4e6ef;--text2:#9ca0b0;--text3:#6b7089;
+  --accent:#3dd6b5;--accent2:#2bb89a;--accent-bg:rgba(61,214,181,.1);
+  --orange:#f59e0b;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;--pink:#ec4899;
+  --card-radius:14px;--sidebar-w:240px;
+}
+body{font-family:'Pretendard',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.diff-up{color:#3dd6b5;font-size:11px;font-weight:600;margin-left:2px}
+.diff-down{color:#ef4444;font-size:11px;font-weight:600;margin-left:2px}
+.crawl-info{font-size:11px;color:var(--text3);text-align:right;padding:4px 20px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--bg3);padding:20px 0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:10}
+.sidebar-header{padding:0 20px 20px;border-bottom:1px solid var(--bg3)}
+.sidebar-header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+.nav-item{padding:12px 20px;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;text-decoration:none;border-left:3px solid transparent}
+.nav-item:hover{background:var(--accent-bg);color:var(--accent)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.nav-divider{height:1px;background:var(--bg3);margin:8px 0}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;padding:24px 28px}
+
+/* SUMMARY CARDS */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.summary-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--card-radius);padding:20px;position:relative;overflow:hidden}
+.summary-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.summary-card.card-total::before{background:var(--accent)}
+.summary-card.card-unused::before{background:var(--orange)}
+.summary-card.card-views::before{background:var(--blue)}
+.summary-card.card-likes::before{background:var(--pink)}
+.summary-card.card-comments::before{background:var(--purple)}
+.summary-label{font-size:12px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.summary-value{font-size:28px;font-weight:800}
+.summary-sub{font-size:11px;color:var(--text3);margin-top:6px}
+.summary-icon{font-size:18px}
+
+/* TABS */
+.tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--bg3);padding-bottom:0;overflow-x:auto}
+.tab-btn{padding:12px 20px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;font-family:inherit;white-space:nowrap}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.platform-icon{margin-right:6px}
+
+/* TABLE */
+.perf-table{width:100%;border-collapse:collapse;margin-bottom:28px}
+.perf-table th{text-align:left;padding:12px 16px;font-size:12px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--bg3);cursor:pointer;user-select:none;white-space:nowrap}
+.perf-table th:hover{color:var(--accent)}
+.perf-table th .sort-icon{margin-left:4px;font-size:10px}
+.perf-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--bg3)}
+.perf-table tr:hover td{background:var(--bg2)}
+.perf-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.topic-link{color:var(--accent);text-decoration:none;cursor:pointer}
+.topic-link:hover{text-decoration:underline}
+.platform-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600}
+.platform-naver{background:rgba(3,199,90,.15);color:#03c75a}
+.platform-instagram{background:rgba(225,48,108,.15);color:#e1306c}
+.platform-youtube{background:rgba(255,0,0,.15);color:#ff0000}
+.post-link{color:var(--blue);text-decoration:none;font-size:11px}
+.post-link:hover{text-decoration:underline}
+
+/* CHARTS */
+.chart-section{margin-bottom:32px}
+.chart-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-container{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--card-radius);padding:20px;height:320px;position:relative}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+
+/* TOP 10 */
+.top-list{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--card-radius);padding:20px}
+.top-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg3)}
+.top-item:last-child{border-bottom:none}
+.top-rank{font-size:20px;font-weight:800;color:var(--accent);opacity:.6;min-width:32px;text-align:center}
+.top-title{flex:1;font-size:13px;font-weight:500}
+.top-views{font-size:13px;color:var(--blue);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state .icon{font-size:48px;margin-bottom:16px}
+.empty-state .text{font-size:14px;line-height:1.8}
+
+/* 발행 등록 모달 */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.pub-modal{background:var(--bg2);border:1px solid var(--bg3);border-radius:16px;max-width:500px;width:100%;padding:28px}
+.pub-modal h3{font-size:16px;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+.form-group select,.form-group input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.form-group select:focus,.form-group input:focus{border-color:var(--accent)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.btn{padding:10px 20px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:var(--bg3);color:var(--text2)}
+.btn-ghost:hover{background:var(--bg4);color:var(--text)}
+
+/* 계정 관리 */
+.account-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px}
+.account-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--card-radius);padding:16px;display:flex;align-items:center;gap:12px}
+.account-card .acc-icon{font-size:24px}
+.account-card .acc-info{flex:1}
+.account-card .acc-name{font-size:14px;font-weight:600}
+.account-card .acc-url{font-size:11px;color:var(--text3);word-break:break-all}
+.account-card .acc-actions{display:flex;gap:4px}
+.acc-btn{padding:4px 8px;background:var(--bg3);border:none;border-radius:4px;color:var(--text3);font-size:11px;cursor:pointer}
+.acc-btn:hover{background:var(--bg4);color:var(--text)}
+.acc-btn.danger:hover{color:var(--red)}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .charts-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .main{padding:16px}
+  .summary-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .chart-container{height:260px}
+  .perf-table{font-size:12px}
+  .perf-table th,.perf-table td{padding:8px 10px}
+}
+@media(max-width:480px){
+  .summary-grid{grid-template-columns:1fr}
+  .summary-value{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>📊 성과 대시보드</h1>
+  </div>
+  <a class="nav-item" href="/">🐾 콘텐츠 DB</a>
+  <a class="nav-item active" href="/performance.html">📊 성과 대시보드</a>
+  <div class="nav-divider"></div>
+  <div id="accountNav"></div>
+</aside>
+
+<main class="main">
+  <!-- 요약 카드 -->
+  <div class="crawl-info" id="crawlInfo"></div>
+  <div class="summary-grid" id="summaryCards"></div>
+
+  <!-- 계정 탭 -->
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- 발행 목록 테이블 -->
+  <div id="tableSection"></div>
+
+  <!-- 차트 섹션 -->
+  <div class="charts-grid">
+    <div class="chart-section">
+      <div class="chart-title">📈 계정별 비교</div>
+      <div class="chart-container"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">🥧 플랫폼별 발행 비율</div>
+      <div class="chart-container"><canvas id="pieChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TOP 10 -->
+  <div class="chart-section">
+    <div class="chart-title">🏆 TOP 10 인기 주제</div>
+    <div class="top-list" id="topList"></div>
+  </div>
+
+  <!-- 계정 관리 -->
+  <div class="chart-section">
+    <div class="chart-title">⚙️ 계정 관리</div>
+    <div class="account-cards" id="accountCards"></div>
+    <button class="btn btn-primary" onclick="showAddAccountModal()">+ 계정 추가</button>
+  </div>
+</main>
+
+<!-- 계정 추가 모달 -->
+<div class="modal-overlay" id="accountModal">
+  <div class="pub-modal">
+    <h3 id="accountModalTitle">계정 추가</h3>
+    <div class="form-group">
+      <label>계정 ID</label>
+      <input type="text" id="accId" placeholder="예: naver-blog-myblog">
+    </div>
+    <div class="form-group">
+      <label>플랫폼</label>
+      <select id="accPlatform">
+        <option value="naver-blog">네이버 블로그</option>
+        <option value="instagram">인스타그램</option>
+        <option value="youtube">유튜브</option>
+        <option value="tiktok">틱톡</option>
+        <option value="other">기타</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>계정 이름</label>
+      <input type="text" id="accName" placeholder="표시될 이름">
+    </div>
+    <div class="form-group">
+      <label>URL</label>
+      <input type="text" id="accUrl" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>채널 ID (유튜브 전용, 선택)</label>
+      <input type="text" id="accChannelId" placeholder="UC...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeAccountModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveAccount()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 상태 ===
+let perfData = null;
+let accountsData = null;
+let activeTab = 'all';
+let sortField = 'publishedAt';
+let sortDir = -1; // -1 = desc
+
+const platformIcons = {
+  'naver-blog': '📗', 'instagram': '📸', 'youtube': '🎬', 'tiktok': '🎵', 'other': '🌐'
+};
+const platformLabels = {
+  'naver-blog': '네이버 블로그', 'instagram': '인스타그램', 'youtube': '유튜브', 'tiktok': '틱톡', 'other': '기타'
+};
+const platformColors = {
+  'naver-blog': '#03c75a', 'instagram': '#e1306c', 'youtube': '#ff0000', 'tiktok': '#69c9d0', 'other': '#6b7089'
+};
+
+async function fetchJSON(url) { return (await fetch(url)).json(); }
+
+// === 초기 로드 ===
+async function init() {
+  [perfData, accountsData] = await Promise.all([
+    fetchJSON('/api/performance'),
+    fetchJSON('/api/accounts')
+  ]);
+  renderSummary();
+  renderTabs();
+  renderAccountNav();
+  renderAccountCards();
+  await loadTabData();
+  renderCharts();
+  renderTop10();
+}
+
+// === 요약 카드 ===
+function renderSummary() {
+  const d = perfData;
+  const totalViews = d.accountStats.reduce((s, a) => s + (a.crawledViews || a.totalViews || 0), 0);
+  const totalLikes = d.accountStats.reduce((s, a) => s + (a.crawledLikes || a.totalLikes || 0), 0);
+  const totalComments = d.accountStats.reduce((s, a) => s + (a.crawledComments || a.totalComments || 0), 0);
+  const totalShares = d.accountStats.reduce((s, a) => s + (a.crawledShares || a.totalShares || 0), 0);
+  const totalPosts = d.accountStats.reduce((s, a) => s + (a.crawledPosts || 0), 0);
+
+  // 전일 대비 변화
+  const changes = d.snapshot?.changes || {};
+  function diffBadge(accountId, field) {
+    const ch = changes[accountId];
+    if (!ch || ch[field] === undefined || ch[field] === 0) return '';
+    const val = ch[field];
+    const cls = val > 0 ? 'diff-up' : 'diff-down';
+    return `<span class="${cls}">${val > 0 ? '▲' : '▼'}${Math.abs(val)}</span>`;
+  }
+
+  const lastCrawled = d.snapshot?.lastCrawled ? new Date(d.snapshot.lastCrawled).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}) : '없음';
+
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="summary-card card-total">
+      <div class="summary-label"><span class="summary-icon">📝</span> 총 발행 콘텐츠</div>
+      <div class="summary-value">${totalPosts.toLocaleString()}</div>
+      <div class="summary-sub">${d.accountStats.map(a => `${platformIcons[a.platform]||'🌐'} ${a.crawledPosts||0}`).join(' · ')}</div>
+    </div>
+    <div class="summary-card card-unused">
+      <div class="summary-label"><span class="summary-icon">📋</span> 미활용 주제</div>
+      <div class="summary-value">${d.totalUnused.toLocaleString()}</div>
+      <div class="summary-sub">DB ${d.totalTopics.toLocaleString()}개 중 활용 가능</div>
+    </div>
+    <div class="summary-card card-views">
+      <div class="summary-label"><span class="summary-icon">👁️</span> 총 조회수</div>
+      <div class="summary-value">${totalViews.toLocaleString()}</div>
+      <div class="summary-sub">${d.accountStats.map(a => {
+        const v = a.crawledViews || a.totalViews || 0;
+        return `${platformIcons[a.platform]||'🌐'} ${v.toLocaleString()} ${diffBadge(a.id, 'viewsDiff')}`;
+      }).join(' · ')}</div>
+    </div>
+    <div class="summary-card card-likes">
+      <div class="summary-label"><span class="summary-icon">❤️</span> 총 좋아요</div>
+      <div class="summary-value">${totalLikes.toLocaleString()}</div>
+      <div class="summary-sub">${d.accountStats.map(a => {
+        const v = a.crawledLikes || a.totalLikes || 0;
+        return `${platformIcons[a.platform]||'🌐'} ${v.toLocaleString()} ${diffBadge(a.id, 'likesDiff')}`;
+      }).join(' · ')}</div>
+    </div>
+    <div class="summary-card card-comments">
+      <div class="summary-label"><span class="summary-icon">💬</span> 총 댓글</div>
+      <div class="summary-value">${totalComments.toLocaleString()}</div>
+      <div class="summary-sub">${d.accountStats.map(a => {
+        const v = a.crawledComments || a.totalComments || 0;
+        return `${platformIcons[a.platform]||'🌐'} ${v.toLocaleString()} ${diffBadge(a.id, 'commentsDiff')}`;
+      }).join(' · ')}</div>
+    </div>
+  `;
+
+  // 마지막 크롤링 시간 표시
+  const crawlInfoEl = document.getElementById('crawlInfo');
+  if (crawlInfoEl) crawlInfoEl.textContent = `마지막 업데이트: ${lastCrawled}`;
+}
+
+// === 탭 ===
+function renderTabs() {
+  const accounts = accountsData.accounts;
+  let html = `<button class="tab-btn ${activeTab === 'all' ? 'active' : ''}" onclick="switchTab('all')">📊 전체</button>`;
+  for (const acc of accounts) {
+    html += `<button class="tab-btn ${activeTab === acc.id ? 'active' : ''}" onclick="switchTab('${acc.id}')">
+      <span class="platform-icon">${platformIcons[acc.platform] || '🌐'}</span>${acc.name}
+    </button>`;
+  }
+  document.getElementById('tabBar').innerHTML = html;
+}
+
+function renderAccountNav() {
+  const accounts = accountsData.accounts;
+  document.getElementById('accountNav').innerHTML = accounts.map(acc =>
+    `<a class="nav-item" href="#" onclick="event.preventDefault();switchTab('${acc.id}')">${platformIcons[acc.platform] || '🌐'} ${acc.name}</a>`
+  ).join('');
+}
+
+async function switchTab(tab) {
+  activeTab = tab;
+  renderTabs();
+  await loadTabData();
+}
+
+async function loadTabData() {
+  let publications = [];
+  
+  if (activeTab === 'all') {
+    // 모든 계정의 발행 목록
+    for (const acc of accountsData.accounts) {
+      try {
+        const d = await fetchJSON(`/api/performance/${acc.id}`);
+        publications.push(...d.publications.map(p => ({ ...p, accountName: acc.name, platform: acc.platform })));
+      } catch (e) { /* skip */ }
+    }
+  } else {
+    try {
+      const d = await fetchJSON(`/api/performance/${activeTab}`);
+      const acc = accountsData.accounts.find(a => a.id === activeTab);
+      publications = d.publications.map(p => ({ ...p, accountName: acc?.name || activeTab, platform: acc?.platform || '' }));
+    } catch (e) { /* skip */ }
+  }
+
+  // 정렬
+  publications.sort((a, b) => {
+    let va, vb;
+    if (sortField === 'publishedAt') {
+      va = new Date(a.publishedAt || 0).getTime();
+      vb = new Date(b.publishedAt || 0).getTime();
+    } else if (sortField === 'views') {
+      va = a.metrics?.views || 0; vb = b.metrics?.views || 0;
+    } else if (sortField === 'likes') {
+      va = a.metrics?.likes || 0; vb = b.metrics?.likes || 0;
+    } else if (sortField === 'comments') {
+      va = a.metrics?.comments || 0; vb = b.metrics?.comments || 0;
+    } else if (sortField === 'title') {
+      return sortDir * a.title.localeCompare(b.title, 'ko');
+    }
+    return sortDir * (vb - va);
+  });
+
+  renderTable(publications);
+}
+
+function renderTable(pubs) {
+  if (pubs.length === 0) {
+    document.getElementById('tableSection').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="text">아직 발행된 콘텐츠가 없습니다.<br>콘텐츠 DB에서 주제를 발행해보세요!</div>
+      </div>`;
+    return;
+  }
+
+  const sortIcon = (field) => sortField === field ? (sortDir === -1 ? '▼' : '▲') : '';
+
+  document.getElementById('tableSection').innerHTML = `
+    <table class="perf-table">
+      <thead>
+        <tr>
+          <th onclick="changeSort('title')">주제 <span class="sort-icon">${sortIcon('title')}</span></th>
+          ${activeTab === 'all' ? '<th>계정</th>' : ''}
+          <th onclick="changeSort('publishedAt')">발행일 <span class="sort-icon">${sortIcon('publishedAt')}</span></th>
+          <th onclick="changeSort('views')" class="num">조회수 <span class="sort-icon">${sortIcon('views')}</span></th>
+          <th onclick="changeSort('likes')" class="num">좋아요 <span class="sort-icon">${sortIcon('likes')}</span></th>
+          <th onclick="changeSort('comments')" class="num">댓글 <span class="sort-icon">${sortIcon('comments')}</span></th>
+          <th>링크</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${pubs.map(p => `
+          <tr>
+            <td><span class="topic-link">${p.title}</span></td>
+            ${activeTab === 'all' ? `<td><span class="platform-badge platform-${p.platform}">${platformIcons[p.platform] || ''} ${p.accountName}</span></td>` : ''}
+            <td>${p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('ko') : '-'}</td>
+            <td class="num">${(p.metrics?.views || 0).toLocaleString()}</td>
+            <td class="num">${(p.metrics?.likes || 0).toLocaleString()}</td>
+            <td class="num">${(p.metrics?.comments || 0).toLocaleString()}</td>
+            <td>${p.postUrl ? `<a class="post-link" href="${p.postUrl}" target="_blank">🔗 보기</a>` : '-'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function changeSort(field) {
+  if (sortField === field) sortDir *= -1;
+  else { sortField = field; sortDir = -1; }
+  loadTabData();
+}
+
+// === 차트 ===
+let barChartInstance = null;
+let pieChartInstance = null;
+
+function renderCharts() {
+  // 계정별 비교 막대 차트
+  const stats = perfData.accountStats;
+  const labels = stats.map(s => s.name);
+
+  if (barChartInstance) barChartInstance.destroy();
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  barChartInstance = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '발행 수', data: stats.map(s => s.crawledPosts || s.publishedCount || 0), backgroundColor: 'rgba(61,214,181,0.7)', borderRadius: 6 },
+        { label: '조회수', data: stats.map(s => s.crawledViews || s.totalViews || 0), backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 6 },
+        { label: '좋아요', data: stats.map(s => s.crawledLikes || s.totalLikes || 0), backgroundColor: 'rgba(236,72,153,0.7)', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#9ca0b0', font: { family: 'Pretendard' } } } },
+      scales: {
+        x: { ticks: { color: '#6b7089', font: { family: 'Pretendard' } }, grid: { color: 'rgba(45,50,68,0.5)' } },
+        y: { ticks: { color: '#6b7089', font: { family: 'Pretendard' } }, grid: { color: 'rgba(45,50,68,0.5)' } }
+      }
+    }
+  });
+
+  // 플랫폼별 콘텐츠 수 파이 차트
+  const platformCounts = {};
+  for (const s of stats) {
+    platformCounts[s.platform] = (platformCounts[s.platform] || 0) + (s.crawledPosts || s.publishedCount || 0);
+  }
+  const pieLabels = Object.keys(platformCounts).map(p => platformLabels[p] || p);
+  const pieData = Object.values(platformCounts);
+  const pieColors = Object.keys(platformCounts).map(p => platformColors[p] || '#6b7089');
+
+  if (pieChartInstance) pieChartInstance.destroy();
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  pieChartInstance = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: pieLabels,
+      datasets: [{ data: pieData.length ? pieData : [1], backgroundColor: pieColors.length ? pieColors : ['#2d3244'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#9ca0b0', font: { family: 'Pretendard' }, padding: 16 } } },
+      cutout: '60%'
+    }
+  });
+}
+
+// === TOP 10 ===
+async function renderTop10() {
+  // 모든 발행물에서 조회수 기준 TOP 10
+  let allPubs = [];
+  for (const acc of accountsData.accounts) {
+    try {
+      const d = await fetchJSON(`/api/performance/${acc.id}`);
+      allPubs.push(...d.publications.map(p => ({ ...p, accountName: acc.name, platform: acc.platform })));
+    } catch (e) { /* skip */ }
+  }
+
+  allPubs.sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
+  const top10 = allPubs.slice(0, 10);
+
+  if (top10.length === 0) {
+    document.getElementById('topList').innerHTML = `
+      <div class="empty-state" style="padding:30px">
+        <div class="icon">🏆</div>
+        <div class="text">발행된 콘텐츠의 성과가 쌓이면 여기에 표시됩니다.</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('topList').innerHTML = top10.map((p, i) => `
+    <div class="top-item">
+      <div class="top-rank">${i + 1}</div>
+      <div class="top-title">
+        ${p.title}
+        <span class="platform-badge platform-${p.platform}" style="margin-left:8px">${platformIcons[p.platform] || ''} ${p.accountName}</span>
+      </div>
+      <div class="top-views">👁️ ${(p.metrics?.views || 0).toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+// === 계정 관리 ===
+function renderAccountCards() {
+  const accounts = accountsData.accounts;
+  document.getElementById('accountCards').innerHTML = accounts.map(acc => `
+    <div class="account-card">
+      <div class="acc-icon">${platformIcons[acc.platform] || '🌐'}</div>
+      <div class="acc-info">
+        <div class="acc-name">${acc.name} <span style="font-size:10px;color:${acc.crawlEnabled !== false ? 'var(--accent)' : 'var(--text3)'};margin-left:4px">${acc.crawlEnabled !== false ? '● 활성' : '○ 비활성'}</span></div>
+        <div class="acc-url">${acc.url ? `<a href="${acc.url}" target="_blank" style="color:var(--text3);text-decoration:underline">${acc.url}</a>` : ''}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">${platformLabels[acc.platform] || acc.platform} · ID: ${acc.id}</div>
+      </div>
+      <div class="acc-actions">
+        <button class="acc-btn" onclick="editAccount('${acc.id}')" title="수정">✏️</button>
+        <button class="acc-btn danger" onclick="deleteAccount('${acc.id}')" title="삭제">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+let editingAccountId = null; // 수정 중인 계정 ID (null이면 신규)
+
+function showAddAccountModal() {
+  editingAccountId = null;
+  document.getElementById('accountModalTitle').textContent = '계정 추가';
+  document.getElementById('accId').value = '';
+  document.getElementById('accId').disabled = false;
+  document.getElementById('accPlatform').value = 'naver-blog';
+  document.getElementById('accName').value = '';
+  document.getElementById('accUrl').value = '';
+  document.getElementById('accChannelId').value = '';
+  document.getElementById('accountModal').classList.add('show');
+}
+
+function editAccount(id) {
+  const acc = accountsData.accounts.find(a => a.id === id);
+  if (!acc) return;
+  editingAccountId = id;
+  document.getElementById('accountModalTitle').textContent = '계정 수정';
+  document.getElementById('accId').value = acc.id;
+  document.getElementById('accId').disabled = true; // ID는 수정 불가
+  document.getElementById('accPlatform').value = acc.platform || 'other';
+  document.getElementById('accName').value = acc.name || '';
+  document.getElementById('accUrl').value = acc.url || '';
+  document.getElementById('accChannelId').value = acc.channelId || '';
+  document.getElementById('accountModal').classList.add('show');
+}
+
+function closeAccountModal() {
+  editingAccountId = null;
+  document.getElementById('accountModal').classList.remove('show');
+}
+
+async function saveAccount() {
+  const body = {
+    platform: document.getElementById('accPlatform').value,
+    name: document.getElementById('accName').value.trim(),
+    url: document.getElementById('accUrl').value.trim()
+  };
+  const channelId = document.getElementById('accChannelId').value.trim();
+  if (channelId) body.channelId = channelId;
+
+  if (!body.name) {
+    alert('이름은 필수입니다.');
+    return;
+  }
+
+  try {
+    let res;
+    if (editingAccountId) {
+      // 수정 모드
+      res = await fetch(`/api/accounts/${editingAccountId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      // 추가 모드
+      body.id = document.getElementById('accId').value.trim();
+      if (!body.id) { alert('ID는 필수입니다.'); return; }
+      res = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.error || '저장 실패');
+      return;
+    }
+    closeAccountModal();
+    accountsData = await fetchJSON('/api/accounts');
+    perfData = await fetchJSON('/api/performance');
+    renderAccountCards();
+    renderAccountNav();
+    renderTabs();
+    renderCharts();
+  } catch (e) {
+    alert('계정 저장 중 오류: ' + e.message);
+  }
+}
+
+async function deleteAccount(id) {
+  if (!confirm(`계정 "${id}"를 삭제하시겠습니까?`)) return;
+  try {
+    await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
+    accountsData = await fetchJSON('/api/accounts');
+    perfData = await fetchJSON('/api/performance');
+    renderAccountCards();
+    renderAccountNav();
+    renderTabs();
+    renderCharts();
+  } catch (e) {
+    alert('삭제 실패: ' + e.message);
+  }
+}
+
+// ESC로 모달 닫기
+document.getElementById('accountModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAccountModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAccountModal(); });
+
+init();
+</script>
+</body>
+</html>

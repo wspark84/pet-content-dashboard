@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>콘텐츠 DB — 반려동물 콘텐츠 라이브러리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   RESET & TOKENS
+   ═══════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  /* ── Warm Neutrals (OKLCH, tinted toward terracotta) ── */
+  --bg:         oklch(0.975 0.008 65);    /* warm off-white */
+  --bg-sidebar: oklch(0.965 0.012 55);    /* slightly warmer */
+  --bg-card:    oklch(0.985 0.006 70);    /* near-white with warmth */
+  --bg-hover:   oklch(0.955 0.014 60);
+  --bg-input:   oklch(0.97 0.008 65);
+  --border:     oklch(0.91 0.012 60);
+  --border-lt:  oklch(0.935 0.008 65);
+
+  /* ── Text (warm charcoal, never pure black) ── */
+  --text:       oklch(0.25 0.015 50);
+  --text-2:     oklch(0.42 0.015 55);
+  --text-3:     oklch(0.58 0.012 55);
+  --text-4:     oklch(0.70 0.010 55);
+
+  /* ── Brand: Terracotta ── */
+  --accent:     oklch(0.58 0.14 35);      /* terracotta */
+  --accent-soft:oklch(0.58 0.14 35 / 0.10);
+  --accent-mid: oklch(0.58 0.14 35 / 0.18);
+  --accent-hover:oklch(0.52 0.15 33);
+
+  /* ── Semantic ── */
+  --blue:       oklch(0.55 0.12 250);
+  --amber:      oklch(0.72 0.14 75);
+  --violet:     oklch(0.55 0.14 300);
+  --green:      oklch(0.60 0.14 155);
+  --rose:       oklch(0.60 0.15 15);
+
+  /* ── Layout ── */
+  --sidebar-w: 260px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+
+  /* ── Type Scale (modular, 1.25 ratio) ── */
+  --step-0: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --step-1: clamp(0.9375rem, 0.88rem + 0.25vw, 1.0625rem);
+  --step-2: clamp(1.125rem, 1.03rem + 0.4vw, 1.3125rem);
+  --step-3: clamp(1.375rem, 1.22rem + 0.65vw, 1.6875rem);
+  --step-4: clamp(1.75rem, 1.5rem + 1.05vw, 2.25rem);
+
+  /* ── Easing ── */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html{background:var(--bg)}
+body{
+  font-family:'Nanum Gothic','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  overflow-x:hidden;
+  width:100%;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Scrollbar — subtle warm tint */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:oklch(0.82 0.012 55);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:oklch(0.72 0.015 55)}
+
+/* Selection */
+::selection{background:var(--accent-mid);color:var(--text)}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════ */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--bg-sidebar);
+  border-right:1px solid var(--border);
+  position:fixed;
+  top:0;left:0;bottom:0;
+  overflow-y:auto;
+  z-index:10;
+  display:flex;
+  flex-direction:column;
+}
+.sidebar-header{
+  padding:clamp(20px,3vw,28px) 22px clamp(16px,2.5vw,22px);
+  border-bottom:1px solid var(--border);
+}
+.sidebar-header h1{
+  font-size:var(--step-1);
+  font-weight:800;
+  color:var(--text);
+  letter-spacing:-0.02em;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.sidebar-header h1 span{font-size:1.3em}
+
+/* Nav links */
+.sidebar-nav{
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-nav a{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 22px;
+  font-size:var(--step-0);
+  color:var(--text-3);
+  text-decoration:none;
+  font-weight:700;
+  border-left:3px solid transparent;
+  transition:all 0.2s var(--ease-out-quart);
+}
+.sidebar-nav a:hover{
+  color:var(--text-2);
+  background:var(--accent-soft);
+}
+.sidebar-nav a.nav-active{
+  color:var(--accent);
+  border-left-color:var(--accent);
+  background:var(--accent-soft);
+}
+
+/* Stats */
+.sidebar-stats{
+  padding:14px 22px 12px;
+  border-bottom:1px solid var(--border);
+}
+.stat-row{
+  display:flex;
+  justify-content:space-between;
+  padding:3px 0;
+  font-size:var(--step-0);
+  color:var(--text-3);
+}
+.stat-row .count{
+  color:var(--accent);
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Category tree */
+.cat-section{padding:4px 0}
+.cat-title{
+  padding:9px 22px;
+  font-size:calc(var(--step-0) * 0.92);
+  font-weight:800;
+  color:var(--text-4);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:color 0.2s var(--ease-out-quart);
+}
+.cat-title:hover{color:var(--text-2)}
+.sub-item{
+  padding:7px 22px 7px 34px;
+  font-size:var(--step-0);
+  color:var(--text-3);
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  transition:all 0.2s var(--ease-out-quart);
+  border-left:3px solid transparent;
+}
+.sub-item:hover{
+  color:var(--text);
+  background:var(--accent-soft);
+}
+.sub-item.active{
+  color:var(--accent);
+  border-left-color:var(--accent);
+  background:var(--accent-soft);
+}
+.sub-item .badge{
+  background:var(--border);
+  color:var(--text-4);
+  font-size:0.7rem;
+  padding:1px 7px;
+  border-radius:10px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.sub-item.active .badge{
+  background:var(--accent);
+  color:var(--bg);
+}
+
+/* ═══════════════════════════════════════
+   MAIN AREA
+   ═══════════════════════════════════════ */
+.main{
+  margin-left:var(--sidebar-w);
+  flex:1;
+  min-height:100vh;
+  overflow-x:hidden;
+  max-width:calc(100vw - var(--sidebar-w));
+  background:var(--bg);
+}
+
+/* ── Topbar ── */
+.topbar{
+  padding:clamp(14px,2vw,20px) clamp(20px,3vw,32px);
+  border-bottom:1px solid var(--border);
+  background:var(--bg);
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+.search-box{
+  flex:1;
+  min-width:200px;
+  position:relative;
+}
+.search-box input{
+  width:100%;
+  padding:9px 16px 9px 38px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:var(--radius-m);
+  color:var(--text);
+  font-size:var(--step-0);
+  font-family:inherit;
+  outline:none;
+  transition:border 0.2s var(--ease-out-quart), box-shadow 0.2s var(--ease-out-quart);
+}
+.search-box input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.search-box input::placeholder{color:var(--text-4)}
+.search-box::before{
+  content:'🔍';
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:0.85rem;
+  pointer-events:none;
+}
+
+.filter-group{display:flex;gap:5px;flex-wrap:wrap}
+.filter-btn{
+  padding:6px 13px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:var(--radius-s);
+  color:var(--text-3);
+  font-size:calc(var(--step-0) * 0.88);
+  cursor:pointer;
+  transition:all 0.15s var(--ease-out-quart);
+  font-family:inherit;
+  font-weight:700;
+}
+.filter-btn:hover{
+  border-color:var(--text-4);
+  color:var(--text-2);
+}
+.filter-btn.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--bg);
+}
+
+/* ── Content Area ── */
+.content{
+  padding:clamp(18px,3vw,32px) clamp(20px,3vw,32px) clamp(40px,5vw,60px);
+}
+.section-title{
+  font-size:var(--step-2);
+  font-weight:800;
+  margin-bottom:clamp(14px,2vw,20px);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  letter-spacing:-0.01em;
+  color:var(--text);
+}
+.section-title .count-badge{
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:calc(var(--step-0) * 0.9);
+  padding:2px 10px;
+  border-radius:10px;
+  font-weight:800;
+}
+
+/* ═══════════════════════════════════════
+   TREND SECTION — Editorial Feature
+   ═══════════════════════════════════════ */
+.trend-section{
+  margin-bottom:clamp(28px,4vw,48px);
+}
+
+.trend-tabs{
+  display:flex;
+  gap:5px;
+  margin-bottom:clamp(10px,1.5vw,14px);
+  flex-wrap:wrap;
+}
+.trend-tab{
+  width:40px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-s);
+  font-size:calc(var(--step-0) * 0.92);
+  font-weight:800;
+  color:var(--text-4);
+  cursor:pointer;
+  transition:all 0.25s var(--ease-out-quart);
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  font-family:inherit;
+}
+.trend-tab:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.trend-tab.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--bg);
+}
+
+.trend-display{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-l);
+  padding:clamp(18px,2.5vw,28px) clamp(20px,3vw,32px);
+  cursor:pointer;
+  transition:all 0.3s var(--ease-out-quart);
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+.trend-display:hover{
+  border-color:var(--accent);
+  box-shadow:0 4px 20px oklch(0.25 0.015 50 / 0.06);
+  transform:translateY(-1px);
+}
+.trend-display-rank{
+  font-size:clamp(2.5rem,5vw,3.5rem);
+  font-weight:800;
+  color:var(--accent);
+  opacity:0.12;
+  position:absolute;
+  top:12px;
+  right:clamp(16px,2.5vw,28px);
+  line-height:1;
+  letter-spacing:-0.04em;
+}
+.trend-display-title{
+  font-size:var(--step-2);
+  font-weight:800;
+  line-height:1.5;
+  padding-right:60px;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.trend-display-desc{
+  font-size:var(--step-0);
+  color:var(--text-2);
+  line-height:1.7;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.trend-display-meta{
+  display:flex;
+  align-items:center;
+  gap:clamp(8px,1.5vw,14px);
+  font-size:calc(var(--step-0) * 0.88);
+  color:var(--text-3);
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+.trend-display-tags{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  margin-top:2px;
+}
+.trend-display-tags .tag{padding:3px 9px;font-size:calc(var(--step-0) * 0.82)}
+.trend-viral-bar{
+  flex:1;
+  max-width:100px;
+  height:5px;
+  background:var(--border);
+  border-radius:3px;
+  overflow:hidden;
+}
+.trend-viral-fill{
+  height:100%;
+  background:var(--accent);
+  border-radius:3px;
+  transition:width 0.5s var(--ease-out-expo);
+}
+
+/* ═══════════════════════════════════════
+   TOPIC GRID — Asymmetric, Magazine Feel
+   ═══════════════════════════════════════ */
+.topic-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:clamp(12px,1.5vw,18px);
+}
+
+/* Feature first card larger */
+.topic-grid .topic-card:first-child{
+  grid-column:span 1;
+}
+@media(min-width:900px){
+  .topic-grid{
+    grid-template-columns:1.15fr 1fr 1fr;
+    gap:16px 14px;
+  }
+  .topic-grid .topic-card:nth-child(5n+1){
+    grid-row:span 1;
+  }
+}
+@media(min-width:1300px){
+  .topic-grid{
+    grid-template-columns:1.2fr 1fr 0.95fr;
+    gap:18px 16px;
+  }
+}
+
+.topic-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-lt);
+  border-radius:var(--radius-m);
+  padding:clamp(16px,2vw,22px);
+  cursor:pointer;
+  transition:all 0.25s var(--ease-out-quart);
+  position:relative;
+  overflow:hidden;
+}
+.topic-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 3px 16px oklch(0.25 0.015 50 / 0.05);
+  transform:translateY(-2px);
+}
+
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+  margin-bottom:8px;
+}
+.card-animal{font-size:1.15rem}
+.card-title{
+  font-size:var(--step-1);
+  font-weight:800;
+  line-height:1.5;
+  flex:1;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.card-desc{
+  font-size:var(--step-0);
+  color:var(--text-2);
+  line-height:1.65;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.card-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-bottom:10px;
+}
+.tag{
+  padding:2px 8px;
+  background:oklch(0.94 0.008 60);
+  border-radius:4px;
+  font-size:calc(var(--step-0) * 0.78);
+  color:var(--text-3);
+  font-weight:700;
+}
+.card-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.diff-badge{
+  padding:3px 10px;
+  border-radius:4px;
+  font-size:calc(var(--step-0) * 0.82);
+  font-weight:800;
+  letter-spacing:0.02em;
+}
+.diff-basic{background:oklch(0.55 0.12 250 / 0.10);color:var(--blue)}
+.diff-intermediate{background:oklch(0.72 0.14 75 / 0.12);color:oklch(0.55 0.14 70)}
+.diff-advanced{background:oklch(0.55 0.14 300 / 0.10);color:var(--violet)}
+
+.viral-score{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:calc(var(--step-0) * 0.88);
+  color:var(--text-3);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.viral-bar{
+  width:50px;
+  height:3px;
+  background:var(--border);
+  border-radius:2px;
+  overflow:hidden;
+}
+.viral-fill{height:100%;border-radius:2px}
+.viral-high{background:var(--accent)}
+.viral-med{background:var(--amber)}
+.viral-low{background:var(--text-4)}
+
+.cat-badge{
+  font-size:calc(var(--step-0) * 0.82);
+  color:var(--text-4);
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid var(--border-lt);
+}
+
+/* ═══════════════════════════════════════
+   USED / PUBLICATION BADGES
+   ═══════════════════════════════════════ */
+.topic-card.topic-used{opacity:.6;border-color:var(--border)}
+.topic-card.topic-used:hover{opacity:.85}
+
+.used-badge{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:calc(var(--step-0) * 0.78);
+  font-weight:800;
+  padding:2px 9px;
+  border-radius:4px;
+  border:1px solid var(--accent-mid);
+}
+
+.pub-badge{
+  position:absolute;
+  top:10px;
+  left:10px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+  background:var(--green);
+  color:var(--bg);
+  font-size:calc(var(--step-0) * 0.75);
+  font-weight:800;
+  padding:2px 7px;
+  border-radius:4px;
+  z-index:1;
+}
+.pub-icons{display:flex;gap:1px;margin-left:3px}
+.pub-icon{font-size:calc(var(--step-0) * 0.78)}
+
+/* ═══════════════════════════════════════
+   MOBILE MENU
+   ═══════════════════════════════════════ */
+.mobile-menu-btn{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-s);
+  cursor:pointer;
+  font-size:1.15rem;
+  color:var(--text);
+  flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.mobile-menu-btn:hover{background:var(--bg-hover)}
+
+/* ═══════════════════════════════════════
+   MODAL — Clean Editorial Overlay
+   ═══════════════════════════════════════ */
+.modal-overlay{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:oklch(0.25 0.015 50 / 0.45);
+  backdrop-filter:blur(2px);
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+.modal-overlay.show{display:flex}
+
+.modal{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-l);
+  max-width:760px;
+  width:100%;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:clamp(22px,3vw,36px);
+  box-shadow:0 12px 40px oklch(0.25 0.015 50 / 0.12);
+}
+.modal-close{
+  float:right;
+  background:none;
+  border:none;
+  color:var(--text-4);
+  font-size:1.1rem;
+  cursor:pointer;
+  padding:4px;
+  transition:color 0.15s;
+}
+.modal-close:hover{color:var(--text)}
+.modal h2{
+  font-size:var(--step-3);
+  font-weight:800;
+  line-height:1.45;
+  padding-right:32px;
+  letter-spacing:-0.02em;
+  color:var(--text);
+}
+.modal .modal-cat{
+  font-size:var(--step-0);
+  color:var(--accent);
+  margin-top:6px;
+  font-weight:700;
+}
+.modal .modal-source{
+  font-size:calc(var(--step-0) * 0.92);
+  color:var(--text-3);
+  margin-top:10px;
+  padding:8px 12px;
+  background:oklch(0.96 0.008 60);
+  border-radius:var(--radius-s);
+  border-left:3px solid var(--accent);
+}
+.modal .modal-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+}
+.modal .modal-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:6px;
+}
+.modal .modal-tags .tag{
+  font-size:calc(var(--step-0) * 0.88);
+  padding:3px 11px;
+}
+
+/* Viral score bar in modal */
+.viral-big{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:18px;
+  padding:14px 18px;
+  background:oklch(0.96 0.010 55);
+  border-radius:var(--radius-m);
+  font-size:var(--step-0);
+  color:var(--text-2);
+  font-weight:700;
+}
+.viral-big-bar{
+  flex:1;
+  height:6px;
+  background:var(--border);
+  border-radius:3px;
+  overflow:hidden;
+}
+.viral-big-fill{
+  height:100%;
+  background:var(--accent);
+  border-radius:3px;
+  transition:width 0.5s var(--ease-out-expo);
+}
+.viral-big-text{
+  font-size:var(--step-3);
+  font-weight:800;
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Used toggle */
+.used-toggle{margin:14px 0 0}
+.used-toggle-btn{
+  width:100%;
+  padding:10px;
+  border:1px dashed var(--border);
+  border-radius:var(--radius-m);
+  background:transparent;
+  color:var(--text-3);
+  font-size:var(--step-0);
+  cursor:pointer;
+  font-family:inherit;
+  font-weight:700;
+  transition:all 0.2s var(--ease-out-quart);
+}
+.used-toggle-btn:hover{
+  border-color:var(--accent);
+  color:var(--text-2);
+}
+.used-toggle-btn.is-used{
+  background:var(--accent-soft);
+  border-color:var(--accent);
+  color:var(--accent);
+  border-style:solid;
+}
+
+/* Modal tabs */
+.modal-tabs{
+  display:flex;
+  gap:0;
+  margin:20px 0 14px;
+  border-bottom:1px solid var(--border);
+}
+.modal-tab{
+  padding:9px 16px;
+  font-size:var(--step-0);
+  font-weight:700;
+  color:var(--text-4);
+  cursor:pointer;
+  border:none;
+  background:none;
+  border-bottom:2px solid transparent;
+  transition:all 0.2s var(--ease-out-quart);
+  font-family:inherit;
+}
+.modal-tab:hover{color:var(--text-2)}
+.modal-tab.active{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+/* Modal sections */
+.modal-section{display:none}
+.modal-section.active{display:block}
+
+.modal-summary{
+  font-size:var(--step-0);
+  color:var(--text-2);
+  line-height:1.9;
+  padding:14px 0;
+}
+.modal-summary h3{
+  font-size:var(--step-1);
+  font-weight:800;
+  color:var(--text);
+  margin:18px 0 8px;
+}
+.modal-summary h3:first-child{margin-top:0}
+.modal-summary p{margin-bottom:10px}
+.modal-summary ul{padding-left:18px;margin-bottom:10px}
+.modal-summary li{margin-bottom:5px;line-height:1.7}
+
+.modal-fulltext{
+  font-size:var(--step-0);
+  color:var(--text-2);
+  line-height:2;
+  padding:14px 0;
+  white-space:pre-wrap;
+}
+.modal-fulltext h3{
+  font-size:var(--step-1);
+  font-weight:800;
+  color:var(--text);
+  margin:22px 0 10px;
+}
+.modal-fulltext h3:first-child{margin-top:0}
+.modal-fulltext p{margin-bottom:12px}
+
+/* References */
+.modal-refs{padding:14px 0}
+.ref-item{
+  display:flex;
+  gap:10px;
+  padding:10px 14px;
+  background:oklch(0.965 0.008 60);
+  border-radius:var(--radius-m);
+  margin-bottom:8px;
+  align-items:flex-start;
+  border:1px solid var(--border-lt);
+}
+.ref-icon{font-size:1.05rem;flex-shrink:0;margin-top:2px}
+.ref-body{flex:1}
+.ref-title{font-size:var(--step-0);font-weight:700;color:var(--text);margin-bottom:3px}
+.ref-source{font-size:calc(var(--step-0) * 0.88);color:var(--text-3)}
+.ref-link{font-size:calc(var(--step-0) * 0.88);color:var(--accent);text-decoration:none;word-break:break-all}
+.ref-link:hover{text-decoration:underline}
+.ref-excerpt{
+  font-size:calc(var(--step-0) * 0.92);
+  color:var(--text-3);
+  font-style:italic;
+  margin-top:5px;
+  padding:6px 8px;
+  background:var(--bg);
+  border-radius:4px;
+  border-left:2px solid var(--border);
+}
+
+.fulltext-toggle{
+  background:var(--accent);
+  color:var(--bg);
+  border:none;
+  padding:7px 14px;
+  border-radius:var(--radius-s);
+  font-size:var(--step-0);
+  cursor:pointer;
+  margin-top:10px;
+  font-family:inherit;
+  font-weight:700;
+  transition:background 0.2s var(--ease-out-quart);
+}
+.fulltext-toggle:hover{background:var(--accent-hover)}
+
+/* ═══════════════════════════════════════
+   PUBLISH SECTION (Modal)
+   ═══════════════════════════════════════ */
+.pub-section{
+  margin-top:18px;
+  padding:18px;
+  background:oklch(0.965 0.008 60);
+  border-radius:var(--radius-m);
+  border:1px solid var(--border-lt);
+}
+.pub-section h4{
+  font-size:var(--step-1);
+  font-weight:800;
+  margin-bottom:12px;
+  color:var(--text);
+}
+.pub-table{width:100%;border-collapse:collapse;margin-bottom:12px}
+.pub-table th{
+  text-align:left;
+  padding:7px 10px;
+  font-size:calc(var(--step-0) * 0.85);
+  color:var(--text-4);
+  border-bottom:1px solid var(--border);
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+.pub-table td{
+  padding:7px 10px;
+  font-size:var(--step-0);
+  border-bottom:1px solid var(--border-lt);
+}
+.pub-table .num{text-align:right;font-variant-numeric:tabular-nums}
+
+.pub-add-btn{
+  background:var(--accent);
+  color:var(--bg);
+  border:none;
+  padding:7px 14px;
+  border-radius:var(--radius-s);
+  font-size:var(--step-0);
+  font-weight:800;
+  cursor:pointer;
+  font-family:inherit;
+  transition:background 0.15s;
+}
+.pub-add-btn:hover{background:var(--accent-hover)}
+
+.pub-form{
+  margin-top:12px;
+  padding:14px;
+  background:var(--bg);
+  border-radius:var(--radius-m);
+  border:1px solid var(--border);
+  display:none;
+}
+.pub-form.show{display:block}
+.pub-form label{
+  display:block;
+  font-size:calc(var(--step-0) * 0.85);
+  color:var(--text-3);
+  font-weight:700;
+  margin-bottom:4px;
+  margin-top:10px;
+}
+.pub-form label:first-child{margin-top:0}
+.pub-form select,.pub-form input{
+  width:100%;
+  padding:7px 10px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:var(--radius-s);
+  color:var(--text);
+  font-size:var(--step-0);
+  font-family:inherit;
+  outline:none;
+  transition:border 0.15s;
+}
+.pub-form select:focus,.pub-form input:focus{border-color:var(--accent)}
+
+.pub-form-actions{display:flex;gap:8px;margin-top:12px}
+.btn-sm{
+  padding:6px 13px;
+  border-radius:var(--radius-s);
+  border:none;
+  font-size:calc(var(--step-0) * 0.9);
+  font-weight:700;
+  cursor:pointer;
+  font-family:inherit;
+}
+.btn-sm-primary{background:var(--accent);color:var(--bg)}
+.btn-sm-ghost{background:var(--border);color:var(--text-3)}
+
+.platform-mini{
+  display:inline-block;
+  padding:1px 6px;
+  border-radius:3px;
+  font-size:calc(var(--step-0) * 0.82);
+  font-weight:700;
+}
+.plat-naver-blog{background:oklch(0.65 0.14 155 / 0.12);color:oklch(0.45 0.12 155)}
+.plat-instagram{background:oklch(0.60 0.15 350 / 0.10);color:oklch(0.50 0.15 350)}
+.plat-youtube{background:oklch(0.60 0.18 25 / 0.10);color:oklch(0.50 0.18 25)}
+
+/* No-content & Empty */
+.no-content{text-align:left;padding:clamp(24px,3vw,40px) 0;color:var(--text-3)}
+.no-content-icon{font-size:1.8rem;margin-bottom:10px}
+.no-content-text{font-size:var(--step-0);line-height:1.6}
+
+.empty{text-align:left;padding:clamp(40px,5vw,60px) 10px;color:var(--text-3)}
+.empty-icon{font-size:2rem;margin-bottom:12px}
+
+/* ═══════════════════════════════════════
+   PAGE LOAD ANIMATION — Staggered reveal
+   ═══════════════════════════════════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.topic-card{
+  animation:fadeUp 0.45s var(--ease-out-expo) both;
+}
+.topic-card:nth-child(1){animation-delay:0.02s}
+.topic-card:nth-child(2){animation-delay:0.06s}
+.topic-card:nth-child(3){animation-delay:0.10s}
+.topic-card:nth-child(4){animation-delay:0.14s}
+.topic-card:nth-child(5){animation-delay:0.18s}
+.topic-card:nth-child(6){animation-delay:0.22s}
+.topic-card:nth-child(n+7){animation-delay:0.26s}
+
+.trend-display{
+  animation:fadeUp 0.5s var(--ease-out-expo) 0.05s both;
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════ */
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s var(--ease-out-quart)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:oklch(0.25 0.015 50 / 0.3);z-index:9}
+  .sidebar-overlay.show{display:block}
+  .main{margin-left:0;max-width:100vw}
+  .mobile-menu-btn{display:flex!important}
+  .topic-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important;gap:12px!important}
+}
+@media(max-width:768px){
+  .topbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .search-box{min-width:100%;width:100%}
+  .filter-group{width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:3px}
+  .filter-btn{white-space:nowrap;flex-shrink:0}
+  .content{padding:14px 16px 32px}
+  .topic-grid{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .topic-card{padding:14px}
+  .card-title{font-size:var(--step-0)}
+  .card-desc{-webkit-line-clamp:2}
+  .section-title{font-size:var(--step-1);margin-bottom:10px}
+  .modal-overlay{padding:0}
+  .modal{padding:18px;max-height:100vh;max-width:100%;border-radius:0;height:100vh}
+  .modal h2{font-size:var(--step-2)}
+}
+@media(max-width:480px){
+  .content{padding:10px 12px 24px}
+  .topic-grid{grid-template-columns:1fr!important;gap:8px!important}
+  .card-title{font-size:var(--step-1)}
+  .card-desc{-webkit-line-clamp:3}
+  .trend-tab{width:34px;height:34px;font-size:0.8rem;border-radius:4px}
+  .trend-display-title{font-size:var(--step-1)}
+  .trend-display-rank{font-size:2rem}
+  .modal{padding:14px;border-radius:0}
+  .modal-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .modal-tab{padding:7px 11px;font-size:calc(var(--step-0) * 0.92);white-space:nowrap}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1><span>🐾</span> 콘텐츠 DB</h1>
+  </div>
+  <div class="sidebar-nav">
+    <a href="/" class="nav-active">🐾 콘텐츠 DB</a>
+    <a href="/performance.html">📊 성과 대시보드</a>
+  </div>
+  <div class="sidebar-stats" id="sidebarStats"></div>
+  <div id="categoryTree"></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="주제 검색... (제목, 설명, 태그)">
+    </div>
+    <div class="filter-group" id="animalFilters">
+      <button class="filter-btn active" data-animal="all">전체</button>
+      <button class="filter-btn" data-animal="dog">🐕 강아지</button>
+      <button class="filter-btn" data-animal="cat">🐈 고양이</button>
+    </div>
+    <div class="filter-group" id="diffFilters">
+      <button class="filter-btn active" data-diff="all">전체</button>
+      <button class="filter-btn" data-diff="basic">기초</button>
+      <button class="filter-btn" data-diff="intermediate">중급</button>
+      <button class="filter-btn" data-diff="advanced">전문</button>
+    </div>
+    <div class="filter-group">
+      <button class="filter-btn active" data-sort="viral" id="sortViral">🔥 바이럴순</button>
+      <button class="filter-btn" data-sort="alpha" id="sortAlpha">가나다순</button>
+    </div>
+    <div class="filter-group" id="pubFilters">
+      <button class="filter-btn active" data-pub="all">전체</button>
+      <button class="filter-btn" data-pub="unpublished">📋 미활용</button>
+      <button class="filter-btn" data-pub="published">✅ 발행됨</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="trend-section">
+      <div class="section-title">트렌드 추천 TOP 10</div>
+      <div class="trend-tabs" id="trendTabs"></div>
+      <div class="trend-display" id="trendDisplay"></div>
+    </div>
+
+    <div class="section-title">
+      전체 주제 <span class="count-badge" id="totalCount">0</span>
+    </div>
+    <div class="topic-grid" id="topicGrid"></div>
+    <div class="empty" id="emptyState" style="display:none">
+      <div class="empty-icon">🔍</div>
+      <div>검색 결과가 없습니다</div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle"></h2>
+    <div class="modal-cat" id="modalCat"></div>
+    <div class="modal-source" id="modalSource"></div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-tags" id="modalTags"></div>
+    <div class="viral-big">
+      <div>바이럴 스코어</div>
+      <div class="viral-big-bar"><div class="viral-big-fill" id="modalViralBar"></div></div>
+      <div class="viral-big-text" id="modalViralText"></div>
+    </div>
+
+    <div class="used-toggle" id="usedToggle"></div>
+
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('summary')">📋 요약</button>
+      <button class="modal-tab" onclick="switchTab('fulltext')">📖 전문</button>
+      <button class="modal-tab" onclick="switchTab('refs')">📚 레퍼런스</button>
+      <button class="modal-tab" onclick="switchTab('publish')">📊 발행 성과</button>
+    </div>
+
+    <div class="modal-section active" id="tabSummary">
+      <div class="modal-summary" id="modalSummary"></div>
+    </div>
+    <div class="modal-section" id="tabFulltext">
+      <div class="modal-fulltext" id="modalFulltext"></div>
+    </div>
+    <div class="modal-section" id="tabRefs">
+      <div class="modal-refs" id="modalRefs"></div>
+    </div>
+    <div class="modal-section" id="tabPublish">
+      <div id="modalPublish"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// MOBILE MENU
+// ═══════════════════════════════════════
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+  document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+}
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.sub-item') || e.target.closest('.cat-title')) {
+    if (window.innerWidth <= 1024) {
+      setTimeout(toggleMobileMenu, 200);
+    }
+  }
+});
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const state = { q: '', animal: 'all', difficulty: 'all', sort: 'viral', subcategory: null, category: null, usedFilter: 'all', pubFilter: 'all' };
+
+// Used topics (localStorage)
+function getUsedTopics() { try { return JSON.parse(localStorage.getItem('usedTopics') || '{}'); } catch { return {}; } }
+function setTopicUsed(title, used) { const data = getUsedTopics(); if (used) { data[title] = { usedAt: new Date().toISOString(), note: '' }; } else { delete data[title]; } localStorage.setItem('usedTopics', JSON.stringify(data)); }
+function isTopicUsed(title) { return !!getUsedTopics()[title]; }
+
+const animalIcon = { dog: '🐕', cat: '🐈', both: '🐾' };
+const diffLabel = { basic: '기초', intermediate: '중급', advanced: '전문' };
+const platformIcons = { 'naver-blog': '📗', 'instagram': '📸', 'youtube': '🎬', 'tiktok': '🎵' };
+let accountsList = [];
+
+async function fetchJSON(url) { return (await fetch(url)).json(); }
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+async function init() {
+  const [cats, trends, stats, accs] = await Promise.all([
+    fetchJSON('/api/categories'),
+    fetchJSON('/api/trends'),
+    fetchJSON('/api/stats'),
+    fetchJSON('/api/accounts')
+  ]);
+  accountsList = accs.accounts || [];
+  renderSidebar(cats, stats);
+  renderTrends(trends);
+  loadTopics();
+}
+
+// ═══════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════
+function renderSidebar(cats, stats) {
+  const statsEl = document.getElementById('sidebarStats');
+  statsEl.innerHTML = `<div class="stat-row"><span>전체 주제</span><span class="count">${stats.total}</span></div>` +
+    Object.entries(stats.categories).map(([k,v]) => `<div class="stat-row"><span>${k}</span><span class="count">${v}</span></div>`).join('');
+  
+  const tree = document.getElementById('categoryTree');
+  tree.innerHTML = cats.map(c => `
+    <div class="cat-section">
+      <div class="cat-title" onclick="filterCategory('${c.id}')">${c.icon||''} ${c.name}</div>
+      ${c.subcategories.map(s => `
+        <div class="sub-item" data-sub="${s.id}" onclick="filterSub('${s.id}','${c.id}')">
+          <span>${s.icon} ${s.name}</span>
+          <span class="badge">${s.count}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// TRENDS
+// ═══════════════════════════════════════
+let trendData = [];
+function renderTrends(trends) {
+  trendData = trends;
+  const tabs = document.getElementById('trendTabs');
+  tabs.innerHTML = trends.map((t, i) => `
+    <div class="trend-tab ${i === 0 ? 'active' : ''}" data-idx="${i}" onclick="selectTrend(${i})">#${i+1}</div>
+  `).join('');
+  if (trends.length > 0) selectTrend(0);
+}
+
+function selectTrend(idx) {
+  document.querySelectorAll('.trend-tab').forEach(el => el.classList.remove('active'));
+  const activeTab = document.querySelector(`.trend-tab[data-idx="${idx}"]`);
+  if (activeTab) activeTab.classList.add('active');
+  const t = trendData[idx];
+  if (!t) return;
+  const display = document.getElementById('trendDisplay');
+  display.setAttribute('onclick', `showModal(trendData[${idx}])`);
+  display.innerHTML = `
+    <div class="trend-display-rank">#${idx+1}</div>
+    <div class="trend-display-title">${t.title}</div>
+    <div class="trend-display-desc">${t.description || ''}</div>
+    <div class="trend-display-meta">
+      <span>${animalIcon[t.animal]} ${t.subcategoryName}</span>
+      <span>난이도: ${diffLabel[t.difficulty]}</span>
+      <span>🔥 ${t.viralScore}</span>
+      <div class="trend-viral-bar"><div class="trend-viral-fill" style="width:${t.viralScore}%"></div></div>
+    </div>
+    <div class="trend-display-tags">${(t.tags || []).slice(0,5).map(tag => `<span class="tag">#${tag}</span>`).join('')}</div>
+  `;
+}
+
+// ═══════════════════════════════════════
+// TOPICS
+// ═══════════════════════════════════════
+async function loadTopics() {
+  const params = new URLSearchParams();
+  if (state.q) params.set('q', state.q);
+  if (state.animal !== 'all') params.set('animal', state.animal);
+  if (state.difficulty !== 'all') params.set('difficulty', state.difficulty);
+  if (state.subcategory) params.set('subcategory', state.subcategory);
+  if (state.category) params.set('category', state.category);
+  params.set('sort', state.sort);
+
+  const data = await fetchJSON('/api/topics?' + params);
+  
+  // Publication filter
+  if (state.pubFilter === 'published') {
+    data.topics = data.topics.filter(t => t.publications && t.publications.length > 0);
+  } else if (state.pubFilter === 'unpublished') {
+    data.topics = data.topics.filter(t => !t.publications || t.publications.length === 0);
+  }
+  data.total = data.topics.length;
+  document.getElementById('totalCount').textContent = data.total;
+
+  const grid = document.getElementById('topicGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (data.topics.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = data.topics.map(t => {
+    const vClass = t.viralScore >= 85 ? 'viral-high' : t.viralScore >= 70 ? 'viral-med' : 'viral-low';
+    const used = isTopicUsed(t.title);
+    const pubs = t.publications || [];
+    const hasPublications = pubs.length > 0;
+    const pubBadge = hasPublications ? `<div class="pub-badge">✅ 발행됨<span class="pub-icons">${pubs.map(p => `<span class="pub-icon">${platformIcons[p.platform] || '🌐'}</span>`).join('')}</span></div>` : '';
+    return `
+    <div class="topic-card ${used ? 'topic-used' : ''}" onclick='showModal(${JSON.stringify(t).replace(/'/g,"&#39;")})'>
+      ${pubBadge}
+      ${!hasPublications && used ? '<div class="used-badge">✅ 활용완료</div>' : ''}
+      <div class="card-header">
+        <div class="card-title">${t.title}</div>
+        <div class="card-animal">${animalIcon[t.animal]}</div>
+      </div>
+      <div class="card-desc">${t.description}</div>
+      <div class="card-tags">${t.tags.slice(0,4).map(tag => `<span class="tag">#${tag}</span>`).join('')}</div>
+      <div class="card-footer">
+        <span class="diff-badge diff-${t.difficulty}">${diffLabel[t.difficulty]}</span>
+        <div class="viral-score">
+          🔥 <div class="viral-bar"><div class="viral-fill ${vClass}" style="width:${t.viralScore}%"></div></div> ${t.viralScore}
+        </div>
+      </div>
+      <div class="cat-badge">${t.categoryIcon} ${t.categoryName} > ${t.subcategoryName}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.modal-section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  const tabMap = { summary: 'tabSummary', fulltext: 'tabFulltext', refs: 'tabRefs', publish: 'tabPublish' };
+  document.getElementById(tabMap[tab]).classList.add('active');
+}
+
+function renderSummary(t) {
+  if (t.summary) return t.summary;
+  let html = `<h3>📌 개요</h3><p>${t.description}</p>`;
+  if (t.keyPoints && t.keyPoints.length > 0) {
+    html += `<h3>💡 핵심 포인트</h3><ul>${t.keyPoints.map(p => `<li>${p}</li>`).join('')}</ul>`;
+  }
+  if (t.targetAudience) {
+    html += `<h3>🎯 타겟 독자</h3><p>${t.targetAudience}</p>`;
+  }
+  if (t.cardNewsAngle) {
+    html += `<h3>📸 카드뉴스 앵글</h3><p>${t.cardNewsAngle}</p>`;
+  }
+  return html;
+}
+
+function renderFulltext(t) {
+  if (t.fullContent) {
+    if (t.fullContent.length > 2000) {
+      const preview = t.fullContent.substring(0, 500);
+      return `
+        <div class="fulltext-content">
+          <div class="fulltext-preview" id="fulltextPreview">${preview}...</div>
+          <div class="fulltext-full" id="fulltextFull" style="display:none">${t.fullContent}</div>
+          <button class="fulltext-toggle" id="fulltextToggle" onclick="toggleFulltext()">📖 전문 보기</button>
+        </div>
+      `;
+    }
+    return t.fullContent;
+  }
+  return `<div class="no-content"><div class="no-content-icon">📝</div><div class="no-content-text">NotebookLM에서 추출 예정입니다.<br>상세 원문은 준비되는 대로 업데이트됩니다.</div></div>`;
+}
+
+function renderRefs(t) {
+  if (t.references && t.references.length > 0) {
+    return t.references.map(r => `
+      <div class="ref-item">
+        <div class="ref-icon">${r.type === 'paper' ? '📄' : r.type === 'news' ? '📰' : r.type === 'book' ? '📕' : r.type === 'web' ? '🌐' : '📋'}</div>
+        <div class="ref-body">
+          <div class="ref-title">${r.title}</div>
+          <div class="ref-source">${r.source || ''} ${r.year ? `(${r.year})` : ''}</div>
+          ${r.url ? `<a class="ref-link" href="${r.url}" target="_blank">${r.url}</a>` : ''}
+          ${r.excerpt ? `<div class="ref-excerpt">"${r.excerpt}"</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  return `<div class="no-content"><div class="no-content-icon">📚</div><div class="no-content-text">레퍼런스 정보가 아직 준비되지 않았습니다.<br>전문 자료 기반으로 순차 업데이트 예정입니다.</div></div>`;
+}
+
+function showModal(t) {
+  document.getElementById('modalTitle').textContent = t.title;
+  document.getElementById('modalCat').textContent = `${t.categoryIcon || ''} ${t.categoryName || ''} > ${t.subcategoryIcon || ''} ${t.subcategoryName || ''} | ${animalIcon[t.animal]} ${t.animal === 'dog' ? '강아지' : t.animal === 'cat' ? '고양이' : '공통'}`;
+  
+  let sourceInfo = '';
+  if (t.sourceNotebook || t.sourceDocument) {
+    sourceInfo = '📄 출처: ';
+    if (t.sourceNotebook) sourceInfo += t.sourceNotebook;
+    if (t.sourceDocument) sourceInfo += (t.sourceNotebook ? ' > ' : '') + t.sourceDocument;
+  }
+  document.getElementById('modalSource').textContent = sourceInfo;
+  document.getElementById('modalSource').style.display = sourceInfo ? 'block' : 'none';
+
+  document.getElementById('modalMeta').innerHTML = `
+    <span class="diff-badge diff-${t.difficulty}">${diffLabel[t.difficulty]}</span>
+    <span style="color:var(--text-3);font-size:calc(var(--step-0) * 0.9)">${t.categoryId || ''} / ${t.subcategoryId || ''}</span>
+  `;
+  document.getElementById('modalTags').innerHTML = t.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
+  document.getElementById('modalViralBar').style.width = t.viralScore + '%';
+  document.getElementById('modalViralText').textContent = t.viralScore;
+
+  const used = isTopicUsed(t.title);
+  document.getElementById('usedToggle').innerHTML = `
+    <button class="used-toggle-btn ${used ? 'is-used' : ''}" onclick="event.stopPropagation(); toggleUsed('${t.title.replace(/'/g,"\\'")}')">
+      ${used ? '✅ 활용완료 — 클릭하여 해제' : '📋 이 주제를 활용완료로 표시'}
+    </button>
+  `;
+  window._currentModalTitle = t.title;
+
+  switchTab('summary');
+
+  document.getElementById('modalSummary').innerHTML = renderSummary(t);
+  document.getElementById('modalFulltext').innerHTML = renderFulltext(t);
+  document.getElementById('modalRefs').innerHTML = renderRefs(t);
+  document.getElementById('modalPublish').innerHTML = renderPublish(t);
+
+  window._currentTopic = t;
+  document.getElementById('modal').classList.add('show');
+}
+
+function renderPublish(t) {
+  const pubs = t.publications || [];
+  let html = '<div class="pub-section"><h4>📊 발행 성과</h4>';
+  
+  if (pubs.length > 0) {
+    html += `<table class="pub-table">
+      <thead><tr><th>계정</th><th>발행일</th><th class="num">조회수</th><th class="num">좋아요</th><th class="num">댓글</th><th>링크</th></tr></thead>
+      <tbody>`;
+    for (const p of pubs) {
+      const acc = accountsList.find(a => a.id === p.accountId);
+      const platClass = 'plat-' + (p.platform || '').replace(/\s/g,'-');
+      html += `<tr>
+        <td><span class="platform-mini ${platClass}">${platformIcons[p.platform] || '🌐'} ${acc ? acc.name : p.accountId}</span></td>
+        <td>${p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('ko') : '-'}</td>
+        <td class="num">${(p.metrics?.views || 0).toLocaleString()}</td>
+        <td class="num">${(p.metrics?.likes || 0).toLocaleString()}</td>
+        <td class="num">${(p.metrics?.comments || 0).toLocaleString()}</td>
+        <td>${p.postUrl ? `<a href="${p.postUrl}" target="_blank" style="color:var(--accent);font-size:calc(var(--step-0) * 0.88)">🔗</a>` : '-'}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+  } else {
+    html += '<p style="color:var(--text-3);font-size:var(--step-0);padding:10px 0">아직 발행 기록이 없습니다.</p>';
+  }
+
+  html += `<button class="pub-add-btn" onclick="document.getElementById('pubForm').classList.toggle('show')">+ 발행 기록 추가</button>
+  <div class="pub-form" id="pubForm">
+    <label>계정</label>
+    <select id="pubAccountId">
+      ${accountsList.map(a => `<option value="${a.id}">${platformIcons[a.platform] || ''} ${a.name}</option>`).join('')}
+    </select>
+    <label>게시물 URL</label>
+    <input type="text" id="pubPostUrl" placeholder="https://...">
+    <label>게시물 ID</label>
+    <input type="text" id="pubPostId" placeholder="게시물 고유 ID">
+    <div class="pub-form-actions">
+      <button class="btn-sm btn-sm-ghost" onclick="document.getElementById('pubForm').classList.remove('show')">취소</button>
+      <button class="btn-sm btn-sm-primary" onclick="submitPublish()">등록</button>
+    </div>
+  </div>`;
+
+  html += '</div>';
+  return html;
+}
+
+async function submitPublish() {
+  const t = window._currentTopic;
+  if (!t) return;
+  const accountId = document.getElementById('pubAccountId').value;
+  const postUrl = document.getElementById('pubPostUrl').value.trim();
+  const postId = document.getElementById('pubPostId').value.trim();
+  if (!accountId) { alert('계정을 선택해주세요'); return; }
+
+  try {
+    const res = await fetch(`/api/topics/${t.categoryId}/${t.subcategoryId}/${t._index}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId, postUrl, postId, publishedAt: new Date().toISOString() })
+    });
+    if (!res.ok) { const e = await res.json(); alert(e.error || '등록 실패'); return; }
+    alert('발행 기록이 등록되었습니다!');
+    closeModal();
+    loadTopics();
+  } catch (e) {
+    alert('오류: ' + e.message);
+  }
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+function toggleFulltext() {
+  const preview = document.getElementById('fulltextPreview');
+  const full = document.getElementById('fulltextFull');
+  const toggle = document.getElementById('fulltextToggle');
+  
+  if (full.style.display === 'none') {
+    preview.style.display = 'none';
+    full.style.display = 'block';
+    toggle.textContent = '📖 접기';
+  } else {
+    preview.style.display = 'block';
+    full.style.display = 'none';
+    toggle.textContent = '📖 전문 보기';
+  }
+}
+
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ═══════════════════════════════════════
+// SEARCH & FILTERS
+// ═══════════════════════════════════════
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.q = e.target.value; loadTopics(); }, 300);
+});
+
+document.getElementById('animalFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#animalFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.animal = btn.dataset.animal;
+  loadTopics();
+});
+
+document.getElementById('diffFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#diffFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.difficulty = btn.dataset.diff;
+  loadTopics();
+});
+
+document.getElementById('sortViral').addEventListener('click', () => {
+  state.sort = 'viral';
+  document.getElementById('sortViral').classList.add('active');
+  document.getElementById('sortAlpha').classList.remove('active');
+  loadTopics();
+});
+document.getElementById('sortAlpha').addEventListener('click', () => {
+  state.sort = 'alpha';
+  document.getElementById('sortAlpha').classList.add('active');
+  document.getElementById('sortViral').classList.remove('active');
+  loadTopics();
+});
+
+document.getElementById('pubFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#pubFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.pubFilter = btn.dataset.pub;
+  loadTopics();
+});
+
+function toggleUsed(title) {
+  const used = isTopicUsed(title);
+  setTopicUsed(title, !used);
+  const btn = document.querySelector('.used-toggle-btn');
+  if (btn) {
+    btn.classList.toggle('is-used');
+    btn.textContent = !used ? '✅ 활용완료 — 클릭하여 해제' : '📋 이 주제를 활용완료로 표시';
+  }
+  loadTopics();
+}
+
+function filterSub(subId, catId) {
+  document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+  if (state.subcategory === subId) {
+    state.subcategory = null;
+    state.category = null;
+  } else {
+    state.subcategory = subId;
+    state.category = catId;
+    document.querySelector(`[data-sub="${subId}"]`)?.classList.add('active');
+  }
+  loadTopics();
+}
+
+function filterCategory(catId) {
+  document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+  if (state.category === catId && !state.subcategory) {
+    state.category = null;
+  } else {
+    state.category = catId;
+    state.subcategory = null;
+  }
+  loadTopics();
+}
+
+init();
+</script>
+</body>
+</html>

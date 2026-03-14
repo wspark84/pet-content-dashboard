@@ -1,0 +1,26 @@
+{
+  "accounts": [
+    {
+      "id": "naver-blog-lifelogics",
+      "platform": "naver-blog",
+      "name": "멍냥마켓 블로그",
+      "url": "https://blog.naver.com/lifelogics",
+      "crawlEnabled": true
+    },
+    {
+      "id": "instagram-solopet6a",
+      "platform": "instagram",
+      "name": "독박집사 인스타그램",
+      "url": "https://instagram.com/solopet6a",
+      "crawlEnabled": true
+    },
+    {
+      "id": "youtube-vet-nutrition",
+      "platform": "youtube",
+      "name": "수의영양학 유튜브",
+      "channelId": "UCyQD6agmbiwm0xLraDDsO2Q",
+      "url": "https://youtube.com/@vet_nutrition-o7w",
+      "crawlEnabled": true
+    }
+  ]
+}
