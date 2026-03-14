@@ -33,7 +33,16 @@ const data = JSON.parse(readFileSync(dataPath, 'utf8'));
 
 async function migrateCategories() {
   console.log('\n📁 Migrating categories...');
-  const categories = data.categories.map(c => ({
+  const categories = data.categories
+    .filter(c => c.id) // id 없는 카테고리 제외
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      icon: c.icon || null
+    }));
+  // id 없는 카테고리에 id 부여
+  data.categories.forEach(c => { if (!c.id) c.id = c.name.replace(/\s+/g, '-').toLowerCase(); });
+  const catsWithId = data.categories.map(c => ({
     id: c.id,
     name: c.name,
     icon: c.icon || null
@@ -41,7 +50,7 @@ async function migrateCategories() {
 
   const { data: result, error } = await supabase
     .from('content_categories')
-    .upsert(categories, { onConflict: 'id' })
+    .upsert(catsWithId, { onConflict: 'id' })
     .select();
 
   if (error) {
@@ -56,7 +65,9 @@ async function migrateSubcategories() {
   const subcategories = [];
 
   for (const cat of data.categories) {
+    if (!cat.id) cat.id = cat.name.replace(/\s+/g, '-').toLowerCase();
     for (const sub of cat.subcategories) {
+      if (!sub.id) sub.id = sub.name.replace(/\s+/g, '-').toLowerCase();
       subcategories.push({
         id: sub.id,
         category_id: cat.id,
