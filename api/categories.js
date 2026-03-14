@@ -20,12 +20,20 @@ module.exports = async (req, res) => {
 
     if (subErr) throw subErr;
 
-    // Fetch topic counts per subcategory
-    const { data: topicCounts, error: countErr } = await supabase
-      .from('content_topics')
-      .select('category_id, subcategory_id');
-
-    if (countErr) throw countErr;
+    // Fetch topic counts per subcategory (paginate to bypass 1000 row limit)
+    let topicCounts = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data: page, error: countErr } = await supabase
+        .from('content_topics')
+        .select('category_id, subcategory_id')
+        .range(from, from + pageSize - 1);
+      if (countErr) throw countErr;
+      topicCounts = topicCounts.concat(page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
 
     // Count topics per subcategory
     const countMap = {};

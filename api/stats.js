@@ -18,17 +18,15 @@ module.exports = async (req, res) => {
 
     if (catErr) throw catErr;
 
-    // Get counts per category
-    const { data: topicsByCat, error: countErr } = await supabase
-      .from('content_topics')
-      .select('category_id');
-
-    if (countErr) throw countErr;
-
-    // Count
+    // Get counts per category (use range to bypass 1000 row limit)
     const countMap = {};
-    for (const t of topicsByCat) {
-      countMap[t.category_id] = (countMap[t.category_id] || 0) + 1;
+    for (const cat of categories) {
+      const { count, error: countErr } = await supabase
+        .from('content_topics')
+        .select('*', { count: 'exact', head: true })
+        .eq('category_id', cat.id);
+      if (countErr) throw countErr;
+      countMap[cat.id] = count || 0;
     }
 
     const stats = { total, categories: {} };

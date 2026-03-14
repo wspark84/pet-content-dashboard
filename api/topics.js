@@ -29,8 +29,17 @@ module.exports = async (req, res) => {
       query = query.order('viral_score', { ascending: false, nullsFirst: false });
     }
 
-    const { data: topics, error } = await query;
-    if (error) throw error;
+    // Paginate to get all results (bypass Supabase 1000 row default limit)
+    let topics = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data: page, error } = await query.range(from, from + pageSize - 1);
+      if (error) throw error;
+      topics = topics.concat(page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
 
     // Fetch category/subcategory lookup maps
     const { data: cats } = await supabase.from('content_categories').select('id, name, icon');
