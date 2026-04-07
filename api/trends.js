@@ -7,10 +7,14 @@ module.exports = async (req, res) => {
   try {
     const supabase = getSupabase();
 
+    // 업로드 기준 최근 7일 이내 글만, 조회수 높은 순 TOP 10
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: topics, error } = await supabase
       .from('content_topics')
       .select('*')
-      .order('viral_score', { ascending: false, nullsFirst: false })
+      .gte('crawled_at', oneWeekAgo)
+      .not('views', 'is', null)
+      .order('views', { ascending: false, nullsFirst: false })
       .limit(10);
 
     if (error) throw error;
